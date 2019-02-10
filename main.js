@@ -113,8 +113,9 @@ function create() {
 
     // listen for socket messages and updating scene
     socket.addEventListener("message", function (event) {
-        const nodes = JSON.parse(event.data)
-        //console.log(nodes);
+        const message = JSON.parse(event.data)
+        const nodes = message.cells || [];
+        console.log(message.warnings);
         for (let counter = 0; counter < population; counter++) {
             const node = nodes[counter];
             if (!node) {
