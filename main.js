@@ -2,6 +2,51 @@ const socket = new WebSocket("ws://localhost:4000");
 
 socket.addEventListener("open", function (event) {
     console.log("Socket established");
+    const filterDefinitions = [
+        {
+            left_hand: "cell.pos.x",
+            left_hand_type: "coordinate",
+            operator: "<",
+            right_hand: "1200",
+            right_hand_type: "number",
+        },
+        {
+            left_hand: "cell.pos.y",
+            left_hand_type: "coordinate",
+            operator: "<",
+            right_hand: "1200",
+            right_hand_type: "number",
+        },
+        {
+            left_hand: "cell.pos.z",
+            left_hand_type: "coordinate",
+            operator: "<",
+            right_hand: "1200",
+            right_hand_type: "number",
+        },
+        {
+            left_hand: "cell.pos.x",
+            left_hand_type: "coordinate",
+            operator: ">",
+            right_hand: "800",
+            right_hand_type: "number",
+        },
+        {
+            left_hand: "cell.pos.y",
+            left_hand_type: "coordinate",
+            operator: ">",
+            right_hand: "800",
+            right_hand_type: "number",
+        },
+        {
+            left_hand: "cell.pos.z",
+            left_hand_type: "coordinate",
+            operator: ">",
+            right_hand: "800",
+            right_hand_type: "number",
+        },
+    ]
+    socket.send(JSON.stringify(filterDefinitions))
 });
 
 
