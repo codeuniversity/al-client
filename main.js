@@ -2,6 +2,51 @@ const socket = new WebSocket("ws://localhost:4000");
 
 socket.addEventListener("open", function (event) {
     console.log("Socket established");
+    const filterDefinitions = [
+        {
+            left_hand: "cell.pos.x",
+            left_hand_type: "coordinate",
+            operator: "<",
+            right_hand: "1200",
+            right_hand_type: "number",
+        },
+        {
+            left_hand: "cell.pos.y",
+            left_hand_type: "coordinate",
+            operator: "<",
+            right_hand: "1200",
+            right_hand_type: "number",
+        },
+        {
+            left_hand: "cell.pos.z",
+            left_hand_type: "coordinate",
+            operator: "<",
+            right_hand: "1200",
+            right_hand_type: "number",
+        },
+        {
+            left_hand: "cell.pos.x",
+            left_hand_type: "coordinate",
+            operator: ">",
+            right_hand: "800",
+            right_hand_type: "number",
+        },
+        {
+            left_hand: "cell.pos.y",
+            left_hand_type: "coordinate",
+            operator: ">",
+            right_hand: "800",
+            right_hand_type: "number",
+        },
+        {
+            left_hand: "cell.pos.z",
+            left_hand_type: "coordinate",
+            operator: ">",
+            right_hand: "800",
+            right_hand_type: "number",
+        },
+    ]
+    socket.send(JSON.stringify(filterDefinitions))
 });
 
 
@@ -68,8 +113,9 @@ function create() {
 
     // listen for socket messages and updating scene
     socket.addEventListener("message", function (event) {
-        const nodes = JSON.parse(event.data)
-        //console.log(nodes);
+        const message = JSON.parse(event.data)
+        const nodes = message.cells || [];
+        console.log(message.warnings);
         for (let counter = 0; counter < population; counter++) {
             const node = nodes[counter];
             if (!node) {
