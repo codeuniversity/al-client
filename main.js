@@ -2,60 +2,54 @@ const socket = new WebSocket("ws://localhost:4000");
 
 socket.addEventListener("open", function (event) {
     console.log("Socket established");
-    const filterDefinitions = [
-        {
-            left_hand: "cell.pos.x",
-            left_hand_type: "coordinate",
-            operator: "<",
-            right_hand: "1200",
-            right_hand_type: "number",
-        },
-        {
-            left_hand: "cell.pos.y",
-            left_hand_type: "coordinate",
-            operator: "<",
-            right_hand: "1200",
-            right_hand_type: "number",
-        },
-        {
-            left_hand: "cell.pos.z",
-            left_hand_type: "coordinate",
-            operator: "<",
-            right_hand: "1200",
-            right_hand_type: "number",
-        },
-        {
-            left_hand: "cell.pos.x",
-            left_hand_type: "coordinate",
-            operator: ">",
-            right_hand: "800",
-            right_hand_type: "number",
-        },
-        {
-            left_hand: "cell.pos.y",
-            left_hand_type: "coordinate",
-            operator: ">",
-            right_hand: "800",
-            right_hand_type: "number",
-        },
-        {
-            left_hand: "cell.pos.z",
-            left_hand_type: "coordinate",
-            operator: ">",
-            right_hand: "800",
-            right_hand_type: "number",
-        },
-    ]
-    socket.send(JSON.stringify(filterDefinitions))
+
+    const filterDefinitions = [{
+        left_hand: "cell.pos.x",
+        left_hand_type: "coordinate",
+        operator: "<",
+        right_hand: "2000",
+        right_hand_type: "number"
+    }, {
+        left_hand: "cell.pos.y",
+        left_hand_type: "coordinate",
+        operator: "<",
+        right_hand: "2000",
+        right_hand_type: "number"
+    }, {
+        left_hand: "cell.pos.z",
+        left_hand_type: "coordinate",
+        operator: "<",
+        right_hand: "2000",
+        right_hand_type: "number"
+    }, {
+        left_hand: "cell.pos.x",
+        left_hand_type: "coordinate",
+        operator: ">",
+        right_hand: "0",
+        right_hand_type: "number"
+    }, {
+        left_hand: "cell.pos.y",
+        left_hand_type: "coordinate",
+        operator: ">",
+        right_hand: "0",
+        right_hand_type: "number"
+    }, {
+        left_hand: "cell.pos.z",
+        left_hand_type: "coordinate",
+        operator: ">",
+        right_hand: "0",
+        right_hand_type: "number"
+    }];
+
+    socket.send(JSON.stringify(filterDefinitions));
 });
 
 
+const dimensions = 400;
+const population = 10000;
 
-const limitation = 400;
-const population = 200;
 
-
-var camera, scene, renderer, group, freeze;
+let camera, scene, group, renderer;
 let mouseX = 0;
 let mouseY = 0;
 let windowHalfX = window.innerWidth / 2;
@@ -67,36 +61,28 @@ function create() {
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff);
     scene.fog = new THREE.Fog(0xffffff, 1, 10000);
-    var geometry = new THREE.IcosahedronBufferGeometry(1);
-    var material = new THREE.MeshNormalMaterial();
+    const geometry = new THREE.IcosahedronBufferGeometry(1);
+    const material = new THREE.MeshNormalMaterial();
     group = new THREE.Group();
 
-
-    const gridGeometry = new THREE.BoxBufferGeometry(limitation, limitation, limitation);
+    // create cube grid
+    const gridGeometry = new THREE.BoxBufferGeometry(dimensions, dimensions, dimensions);
     const gridEdges = new THREE.EdgesGeometry(gridGeometry);
     const grid = new THREE.LineSegments(gridEdges, new THREE.LineBasicMaterial({
         color: 0x00ffff
     }));
+
     scene.add(grid);
 
-    // init point in the center
-    var bigbangShape = new THREE.SphereBufferGeometry(1, 40, 40);
-    var bigbangMaterial = new THREE.MeshDepthMaterial();
-    const bigbang = new THREE.Mesh(bigbangShape, bigbangMaterial);
-    bigbang.position.x = 0;
-    bigbang.position.y = 0;
-    bigbang.position.z = 0;
-    bigbang.matrixAutoUpdate = true;
-    scene.add(bigbang);
-
     // add random nodes
-    for (let i = 0; i < population; i++) {
+    for (let counter = 0; counter < population; counter++) {
         const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.x = Math.random() * limitation - limitation / 2;
-        mesh.position.y = Math.random() * limitation - limitation / 2;
-        mesh.position.z = Math.random() * limitation - limitation / 2;
+        mesh.position.x = Math.random() * dimensions - dimensions / 2;
+        mesh.position.y = Math.random() * dimensions - dimensions / 2;
+        mesh.position.z = Math.random() * dimensions - dimensions / 2;
         mesh.rotation.x = Math.random() * 2 * Math.PI;
         mesh.rotation.y = Math.random() * 2 * Math.PI;
+        mesh.visible = false;
         mesh.matrixAutoUpdate = true;
         group.add(mesh);
     }
@@ -111,38 +97,38 @@ function create() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
+    let lastLength = 0;
+
     // listen for socket messages and updating scene
     socket.addEventListener("message", function (event) {
-        const message = JSON.parse(event.data)
+        const message = JSON.parse(event.data);
         const nodes = message.cells || [];
-        console.log(message.warnings);
-        for (let counter = 0; counter < population; counter++) {
-            const node = nodes[counter];
-            if (!node) {
-                console.log("died");
-                //scene.remove(group.children[counter]);
-                return;
-            }
 
-            node.pos.x = node.pos.x / 5 - limitation / 2;
-            node.pos.y = node.pos.y / 5 - limitation / 2;
-            node.pos.z = node.pos.z / 5 - limitation / 2;
-            group.children[counter].position.set(node.pos.x, node.pos.y, node.pos.z);
+        if (message.warnings) console.warn(message.warnings);
+
+        for (let counter = 0; counter < nodes.length; counter++) {
+            const node = nodes[counter];
+
+            if (node.id && node.pos.x && node.pos.y && node.pos.z) {
+                node.pos.x = node.pos.x / 5 - dimensions / 2;
+                node.pos.y = node.pos.y / 5 - dimensions / 2;
+                node.pos.z = node.pos.z / 5 - dimensions / 2;
+                group.children[counter].position.set(node.pos.x, node.pos.y, node.pos.z);
+                group.children[counter].visible = true;
+            }
         }
+
+        for (let counter = nodes.length; counter < lastLength; counter++) {
+            group.children[counter].visible = false;
+        }
+
+        lastLength = nodes.length;
     });
 
     document.onmousemove = function (event) {
         mouseX = event.clientX - windowHalfX;
         mouseY = event.clientY - windowHalfY;
     };
-
-    document.onmousedown = function (event) {
-        freeze = true;
-    }
-
-    document.onmouseup = function (event) {
-        freeze = false;
-    }
 
     window.onresize = function () {
         windowHalfX = window.innerWidth / 2;
@@ -162,9 +148,9 @@ const render = function (actions) {
     camera.position.y += (-mouseY - camera.position.y) * 0.05;
     camera.lookAt(scene.position);
 
-    scene.rotation.x = Math.sin(time * 0.7) * 0.5;
-    scene.rotation.y = Math.sin(time * 0.3) * 0.5;
-    scene.rotation.z = Math.sin(time * 0.2) * 0.5;
+    //scene.rotation.x = Math.sin(time * 0.7) * 0.5;
+    //scene.rotation.y = Math.sin(time * 0.3) * 0.5;
+    //scene.rotation.z = Math.sin(time * 0.2) * 0.5;
 
     renderer.render(scene, camera);
     requestAnimationFrame(render);
